@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة XO الحديثة</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #fff;
+    }
+
+    h1 {
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+
+    .screen {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        color: #333;
+        border-radius: 20px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    }
+
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    .modes {
+        margin-top: 15px;
+    }
+
+    .modes label {
+        font-weight: normal;
+        cursor: pointer;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 20px;
+        padding: 12px;
+        font-size: 18px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    .game {
+        display: none;
+        text-align: center;
+    }
+
+    .status {
+        font-size: 18px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .cell {
+        background: #f2f2f2;
+        border-radius: 15px;
+        font-size: 48px;
+        font-weight: bold;
+        color: #764ba2;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .cell:hover {
+        background: #e0e0e0;
+    }
+
+    .restart {
+        margin-top: 15px;
+        background: #ff6b6b;
+    }
+
+    footer {
+        margin-top: auto;
+        width: 100%;
+        background: rgba(0,0,0,0.3);
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+        .cell {
+            height: 80px;
+            font-size: 36px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🎮 لعبة XO</h1>
+
+<div class="screen start">
+    <label>اسم اللاعب الأول</label>
+    <input type="text" id="player1" placeholder="أدخل الاسم">
+
+    <label>اسم اللاعب الثاني</label>
+    <input type="text" id="player2" placeholder="كمبيوتر أو لاعب">
+
+    <div class="modes">
+        <label>
+            <input type="radio" name="mode" value="1" checked>
+            لاعب واحد (ضد الكمبيوتر)
+        </label><br>
+        <label>
+            <input type="radio" name="mode" value="2">
+            لاعبان
+        </label>
+    </div>
+
+    <button onclick="startGame()">ابدأ اللعب</button>
+</div>
+
+<div class="screen game">
+    <div class="status" id="status"></div>
+
+    <div class="board" id="board">
+        <div class="cell" onclick="play(0)"></div>
+        <div class="cell" onclick="play(1)"></div>
+        <div class="cell" onclick="play(2)"></div>
+        <div class="cell" onclick="play(3)"></div>
+        <div class="cell" onclick="play(4)"></div>
+        <div class="cell" onclick="play(5)"></div>
+        <div class="cell" onclick="play(6)"></div>
+        <div class="cell" onclick="play(7)"></div>
+        <div class="cell" onclick="play(8)"></div>
+    </div>
+
+    <button class="restart" onclick="resetGame()">إعادة اللعب</button>
+</div>
+
+<footer>
+    اسم الطالب: MOHAMMED YAHYA HAMDO ADLABI (محمد يحي حمدو ادلبي)<br>
+    الرقم الجامعي: 446005884<br>
+    بإشراف: Mohammed Ahmed Jabali
+</footer>
+
+<script>
+    let board = Array(9).fill("");
+    let current = "X";
+    let players = [];
+    let mode = 1;
+    let gameOver = false;
+
+    const statusText = document.getElementById("status");
+    const cells = document.querySelectorAll(".cell");
+
+    function startGame() {
+        const p1 = document.getElementById("player1").value || "اللاعب الأول";
+        const p2 = document.getElementById("player2").value || "الكمبيوتر";
+        mode = document.querySelector('input[name="mode"]:checked').value;
+
+        players = [p1, mode == 1 ? "الكمبيوتر" : p2];
+
+        document.querySelector(".start").style.display = "none";
+        document.querySelector(".game").style.display = "block";
+
+        updateStatus();
+    }
+
+    function updateStatus() {
+        statusText.textContent = "الدور على: " + (current === "X" ? players[0] : players[1]);
+    }
+
+    function play(index) {
+        if (board[index] || gameOver) return;
+
+        board[index] = current;
+        cells[index].textContent = current;
+
+        if (checkWin()) {
+            statusText.textContent = "🎉 الفائز: " + (current === "X" ? players[0] : players[1]);
+            gameOver = true;
+            return;
+        }
+
+        if (board.every(c => c)) {
+            statusText.textContent = "🤝 تعادل!";
+            gameOver = true;
+            return;
+        }
+
+        current = current === "X" ? "O" : "X";
+        updateStatus();
+
+        if (mode == 1 && current === "O") {
+            setTimeout(computerPlay, 500);
+        }
+    }
+
+    function computerPlay() {
+        let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+        let move = empty[Math.floor(Math.random() * empty.length)];
+        play(move);
+    }
+
+    function checkWin() {
+        const wins = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6]
+        ];
+        return wins.some(w => w.every(i => board[i] === current));
+    }
+
+    function resetGame() {
+        board.fill("");
+        cells.forEach(c => c.textContent = "");
+        current = "X";
+        gameOver = false;
+        updateStatus();
+    }
+</script>
+
+</body>
+</html>
